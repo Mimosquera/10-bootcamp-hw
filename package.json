@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/Mimosquera/10-bootcamp-hw#readme",
   "dependencies": {
+    "console.table": "^0.10.0",
     "dotenv": "^16.4.7",
     "inquirer": "^8.2.4",
     "pg": "^8.13.1"
