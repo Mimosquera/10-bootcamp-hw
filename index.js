@@ -1,11 +1,11 @@
 require('dotenv').config();
-import { prompt } from 'inquirer';
-import { end, query } from './db';
-import cTable from 'console.table';
+const inquirer = require('inquirer');
+const db = require('./db');
+const cTable = require('console.table');
 
 // Start the CLI application
 function startApp() {
-    prompt([
+    inquirer.prompt([
         {
             type: 'list',
             name: 'action',
@@ -31,7 +31,7 @@ function startApp() {
             case 'Add an employee': return addEmployee();
             case 'Update an employee role': return updateEmployeeRole();
             default:
-                end();
+                db.end();
                 console.log('Goodbye!');
                 process.exit();
         }
@@ -40,7 +40,7 @@ function startApp() {
 
 // View all departments
 function viewDepartments() {
-    query('SELECT * FROM department', (err, res) => {
+    db.query('SELECT * FROM department', (err, res) => {
         if (err) throw err;
         console.log(cTable.getTable(res.rows));
         startApp();
@@ -49,7 +49,7 @@ function viewDepartments() {
 
 // View all roles
 function viewRoles() {
-    query(`
+    db.query(`
     SELECT role.id, role.title, department.name AS department, role.salary 
     FROM role 
     JOIN department ON role.department_id = department.id`, 
@@ -62,7 +62,7 @@ function viewRoles() {
 
 // View all employees
 function viewEmployees() {
-    query(`
+    db.query(`
     SELECT e.id, e.first_name, e.last_name, role.title, department.name AS department, role.salary, 
            CONCAT(m.first_name, ' ', m.last_name) AS manager
     FROM employee e
@@ -78,7 +78,7 @@ function viewEmployees() {
 
 // Add a department
 function addDepartment() {
-    prompt([
+    inquirer.prompt([
         {
             type: 'input',
             name: 'name',
@@ -86,7 +86,7 @@ function addDepartment() {
             validate: input => input ? true : 'Department name cannot be empty!'
         }
     ]).then(answer => {
-        query('INSERT INTO department (name) VALUES ($1)', [answer.name], (err) => {
+        db.query('INSERT INTO department (name) VALUES ($1)', [answer.name], (err) => {
             if (err) throw err;
             console.log(`✅ Department "${answer.name}" added successfully!`);
             startApp();
@@ -96,11 +96,11 @@ function addDepartment() {
 
 // Add a role
 function addRole() {
-    query('SELECT * FROM department', (err, res) => {
+    db.query('SELECT * FROM department', (err, res) => {
         if (err) throw err;
         const departments = res.rows.map(({ id, name }) => ({ name, value: id }));
 
-        prompt([
+        inquirer.prompt([
             {
                 type: 'input',
                 name: 'title',
@@ -120,7 +120,7 @@ function addRole() {
                 choices: departments
             }
         ]).then(answer => {
-            query('INSERT INTO role (title, salary, department_id) VALUES ($1, $2, $3)', 
+            db.query('INSERT INTO role (title, salary, department_id) VALUES ($1, $2, $3)', 
             [answer.title, answer.salary, answer.department_id], (err) => {
                 if (err) throw err;
                 console.log(`✅ Role "${answer.title}" added successfully!`);
@@ -132,18 +132,18 @@ function addRole() {
 
 // Add an employee
 function addEmployee() {
-    query('SELECT * FROM role', (err, roleRes) => {
+    db.query('SELECT * FROM role', (err, roleRes) => {
         if (err) throw err;
         const roles = roleRes.rows.map(({ id, title }) => ({ name: title, value: id }));
 
-        query('SELECT * FROM employee', (err, empRes) => {
+        db.query('SELECT * FROM employee', (err, empRes) => {
             if (err) throw err;
             const managers = empRes.rows.map(({ id, first_name, last_name }) => ({
                 name: `${first_name} ${last_name}`, value: id
             }));
             managers.push({ name: 'None', value: null });
 
-            prompt([
+            inquirer.prompt([
                 {
                     type: 'input',
                     name: 'first_name',
@@ -169,7 +169,7 @@ function addEmployee() {
                     choices: managers
                 }
             ]).then(answer => {
-                query('INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ($1, $2, $3, $4)', 
+                db.query('INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ($1, $2, $3, $4)', 
                 [answer.first_name, answer.last_name, answer.role_id, answer.manager_id], (err) => {
                     if (err) throw err;
                     console.log(`✅ Employee "${answer.first_name} ${answer.last_name}" added successfully!`);
@@ -182,17 +182,17 @@ function addEmployee() {
 
 // Update an employee's role
 function updateEmployeeRole() {
-    query('SELECT * FROM employee', (err, empRes) => {
+    db.query('SELECT * FROM employee', (err, empRes) => {
         if (err) throw err;
         const employees = empRes.rows.map(({ id, first_name, last_name }) => ({
             name: `${first_name} ${last_name}`, value: id
         }));
 
-        query('SELECT * FROM role', (err, roleRes) => {
+        db.query('SELECT * FROM role', (err, roleRes) => {
             if (err) throw err;
             const roles = roleRes.rows.map(({ id, title }) => ({ name: title, value: id }));
 
-            prompt([
+            inquirer.prompt([
                 {
                     type: 'list',
                     name: 'employee_id',
@@ -206,7 +206,7 @@ function updateEmployeeRole() {
                     choices: roles
                 }
             ]).then(answer => {
-                query('UPDATE employee SET role_id = $1 WHERE id = $2', 
+                db.query('UPDATE employee SET role_id = $1 WHERE id = $2', 
                 [answer.role_id, answer.employee_id], (err) => {
                     if (err) throw err;
                     console.log(`✅ Employee role updated successfully!`);

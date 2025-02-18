@@ -61,7 +61,7 @@ The application follows a relational database schema with three tables:
 - **role**: Stores job titles, salaries, and department associations.
 - **employee**: Stores employee details, including role and manager relationships.
 
-![Database Schema](./Assets/100-sql-challenge-ERD.png)
+![Database Schema](./Assets/schema-image.png)
 
 ## Technologies Used
 - **Node.js**
@@ -72,7 +72,7 @@ The application follows a relational database schema with three tables:
 
 ## Demo
 A walkthrough video demonstrating the application's functionality can be found here:
-[Click to Watch](#)
+[Click to Watch](./Assets/demo-video.mp4)
 
 ## License
 This project is licensed under the MIT License.
